@@ -23,7 +23,7 @@ class CalendarViewModel: ObservableObject {
     init() {
         let now = Date()
         // preload 6 tháng: -2, -1, 0, +1, +2, +3
-        for i in -2...3 {
+        for i in -2...2 {
             let date = calendar.date(byAdding: .month, value: i, to: now)!
             months.append(generateMonth(for: date))
         }
@@ -103,7 +103,9 @@ class CalendarViewController: UIViewController {
         layout.scrollDirection = .horizontal
         layout.minimumLineSpacing = 0
         layout.minimumInteritemSpacing = 0
-        layout.itemSize = view.bounds.size
+        let width = view.bounds.width
+        let height = view.bounds.height - 200
+        layout.itemSize = CGSize(width: width, height: height)
         let cv = UICollectionView(frame: .zero, collectionViewLayout: layout)
         cv.isPagingEnabled = true
         cv.showsHorizontalScrollIndicator = false
@@ -158,7 +160,7 @@ class CalendarViewController: UIViewController {
         view.addSubview(collectionView)
         collectionView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            collectionView.topAnchor.constraint(equalTo: weekdayHeaderView.bottomAnchor),
+            collectionView.topAnchor.constraint(equalTo: weekdayHeaderView.bottomAnchor, constant: 20),
             collectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             collectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
@@ -195,6 +197,15 @@ extension CalendarViewController: UICollectionViewDelegate, UICollectionViewData
         viewModel.currentMonthIndex = page
         updateMonthLabel()
 
+//        if page == 0 {
+//            viewModel.loadPreviousMonth()
+//            collectionView.reloadData()
+//            collectionView.scrollToItem(at: IndexPath(item: 1, section: 0), at: .centeredHorizontally, animated: false)
+//        } else if page == viewModel.months.count - 1 {
+//            viewModel.loadNextMonth()
+//            collectionView.reloadData()
+//        }
+        
         if page == 0 {
             viewModel.loadPreviousMonth()
             collectionView.reloadData()
@@ -202,7 +213,9 @@ extension CalendarViewController: UICollectionViewDelegate, UICollectionViewData
         } else if page == viewModel.months.count - 1 {
             viewModel.loadNextMonth()
             collectionView.reloadData()
+            collectionView.scrollToItem(at: IndexPath(item: viewModel.months.count - 2, section: 0), at: .centeredHorizontally, animated: false)
         }
+
     }
 }
 
@@ -211,7 +224,8 @@ class MonthCell: UICollectionViewCell {
     lazy var gridView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         let width = UIScreen.main.bounds.width / 7
-        let height = (UIScreen.main.bounds.height - 30 - 100 - 50) / 6
+//        let height = (UIScreen.main.bounds.height - 30 - 100 - 50) / 6
+        let height: CGFloat = 80
         layout.itemSize = CGSize(width: width, height: height)
         layout.minimumLineSpacing = 0
         layout.minimumInteritemSpacing = 0
@@ -254,7 +268,9 @@ extension MonthCell: UICollectionViewDataSource, UICollectionViewDelegate {
     }
 
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        
+        isSelected.toggle()
+        collectionView.reloadData()
+        print("Clicked")
     }
 }
 
@@ -285,7 +301,7 @@ class DayCell: UICollectionViewCell {
         label.text = "\(dayNum)"
         label.textColor = day.isCurrentMonth ? .label : .lightGray
         layer.borderWidth = 1
-        layer.borderColor = isSelected ? 
+        layer.borderColor = isSelected ? UIColor.blue.cgColor : UIColor.systemGray6.cgColor
         noteLabel.text = day.note
     }
 }
